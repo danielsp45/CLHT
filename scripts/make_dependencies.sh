@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 ssmem=https://github.com/LPD-EPFL/ssmem
 ssmem_folder=./external/ssmem;
