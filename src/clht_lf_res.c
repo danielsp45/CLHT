@@ -29,12 +29,12 @@
  *
  */
 
+#include "clht_lf_res.h"
+
 #include <malloc.h>
 #include <math.h>
 #include <stdlib.h>
 #include <string.h>
-
-#include "clht_lf_res.h"
 
 __thread ssmem_allocator_t *clht_alloc;
 
@@ -225,17 +225,17 @@ retry:
 #endif
 
   // === NEW OVERWRITE PATH ===
-  // Walk each slot in this bucket under the snapshot we just read:
-  for (uint32_t j = 0; j < ENTRIES_PER_BUCKET; j++) {
-    // only consider VALID slots
-    if (snap_get_map(s, j) == MAP_VALID && bucket->key[j] == key) {
-      // we found an existing entry → overwrite its value in place
-      bucket->val[j] = val;
+  clht_snapshot_t ss;
+  ss.snapshot = s;  // interpret s as {version, map[]}
+
+  for (uint32_t j = 0; j < ENTRIES_PER_BUCKET /* or KEY_BUCKT */; j++) {
+    if (ss.map[j] == MAP_VALID && bucket->key[j] == key) {
+      bucket->val[j] = val;  // atomic 64-bit store
 #ifdef __tile__
       _mm_sfence();
 #endif
-      CLHT_NO_UPDATE(); // no change to GC/version bookkeeping
-      return true;      // success (overwrite)
+      CLHT_NO_UPDATE();
+      return true;  // success (overwrite)
     }
   }
   // ==========================
