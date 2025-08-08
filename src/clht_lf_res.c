@@ -228,14 +228,14 @@ retry:
   clht_snapshot_t ss;
   ss.snapshot = s;  // interpret s as {version, map[]}
 
-  for (uint32_t j = 0; j < ENTRIES_PER_BUCKET /* or KEY_BUCKT */; j++) {
+  for (uint32_t j = 0; j < KEY_BUCKT; j++) {
     if (ss.map[j] == MAP_VALID && bucket->key[j] == key) {
       bucket->val[j] = val;  // atomic 64-bit store
 #ifdef __tile__
       _mm_sfence();
 #endif
       CLHT_NO_UPDATE();
-      return true;  // success (overwrite)
+      return true;  // overwrite succeeded
     }
   }
   // ==========================
