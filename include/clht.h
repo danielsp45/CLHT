@@ -306,7 +306,8 @@ clht_t *clht_create(uint64_t num_buckets);
 void clht_gc_thread_init(clht_t *hashtable, int id);
 
 /* Insert a key-value pair into a hashtable. */
-int clht_put(clht_t *hashtable, clht_addr_t key, clht_val_t val);
+int clht_put(clht_t *hashtable, clht_addr_t key, clht_val_t val,
+             clht_val_t *old_val);
 /* Retrieve a key-value pair from a hashtable. */
 clht_val_t clht_get(clht_hashtable_t *hashtable, clht_addr_t key);
 /* Remove a key-value pair from a hashtable. */

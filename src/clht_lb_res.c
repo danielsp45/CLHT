@@ -227,7 +227,7 @@ static inline int bucket_exists(volatile bucket_t *bucket, clht_addr_t key) {
 }
 
 /* Insert or overwrite a key-value entry into a hash table. */
-int clht_put(clht_t *h, clht_addr_t key, clht_val_t val) {
+int clht_put(clht_t *h, clht_addr_t key, clht_val_t val, clht_val_t *old_val) {
   clht_hashtable_t *hashtable = h->ht;
   size_t bin = clht_hash(hashtable, key);
   volatile bucket_t *bucket = hashtable->table + bin;
@@ -244,6 +244,9 @@ int clht_put(clht_t *h, clht_addr_t key, clht_val_t val) {
   CLHT_GC_HT_VERSION_USED(hashtable);
   CLHT_CHECK_STATUS(h);
 
+  if (old_val)
+    *old_val = 0;
+
   clht_addr_t *empty = NULL;
   clht_val_t *empty_v = NULL;
   uint32_t j;
@@ -252,11 +255,14 @@ int clht_put(clht_t *h, clht_addr_t key, clht_val_t val) {
     for (j = 0; j < ENTRIES_PER_BUCKET; j++) {
       if (bucket->key[j] == key) {
         // Overwrite path
+        clht_val_t old = bucket->val[j];
         bucket->val[j] = val;
 #ifdef __tile__
         _mm_sfence();
 #endif
         LOCK_RLS(lock);
+        if (old_val)
+          *old_val = old;
         return 1; // success (overwrite)
       } else if (empty == NULL && bucket->key[j] == 0) {
         empty = (clht_addr_t *)&bucket->key[j];
